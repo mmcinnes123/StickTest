@@ -1,13 +1,18 @@
 ### TO DO BEFORE RUNNING THIS CODE
-# Tidy up input .csv file so there's only one heading row
+# Tidy up input .csv file so there's only one heading row and any rows on bottom are deleted
 # Change settings:
 
 # Settings:
 input_file = "MagTest9.csv"
-boxplot_title = "Standard deviation - Slow"
-boxplot_figname = "SD_BoxPlot_Slow.png"
-SDvTime_scattertitle = "Pitch SD - Slow"
-SDvTime_figname = "SDvTime(Pitch)_Slow.png"
+# Type of data (slow, fast, DZ, mov, stat)
+ty_data = "slow_mov"
+
+boxplot_title = "Standard deviation - " + str(ty_data)
+boxplot_figname = "SD_BoxPlot_" + str(ty_data) + ".png"
+SDvTime_scattertitle = "Pitch SD - " + str(ty_data)
+SDvTime_figname_Pitch = "SDvTime(Pitch)_" + str(ty_data) + ".png"
+SDvTime_figname_Roll = "SDvTime(Roll)_" + str(ty_data) + ".png"
+SDvTime_figname_Yaw = "SDvTime(Yaw)_" + str(ty_data) + ".png"
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -119,6 +124,8 @@ plt.savefig(boxplot_figname)
 plt.clf()
 
 ### Plotting SD and angle against time, to see moments of poor agreement
+
+# Pitch
 plt.figure(2)
 x = Time
 y1 = Pitch_Sen1
@@ -131,8 +138,41 @@ plt.xlabel('Time')
 plt.ylabel('Degrees')
 plt.legend(["Pitch angle", "Pitch SD between sensors"])
 # plt.show()
-plt.savefig(SDvTime_figname)
+plt.savefig(SDvTime_figname_Pitch)
 plt.clf()
+
+# Roll
+plt.figure(2)
+x = Time
+y1 = Roll_Sen1
+y2 = Roll_SD
+plt.scatter(x, y1, s = 5)
+plt.scatter(x,y2, s = 3)
+plt.rcParams.update({'figure.figsize':(15,12), 'figure.dpi':100})
+plt.title(SDvTime_scattertitle)
+plt.xlabel('Time')
+plt.ylabel('Degrees')
+plt.legend(["Roll angle", "Roll SD between sensors"])
+# plt.show()
+plt.savefig(SDvTime_figname_Roll)
+plt.clf()
+
+# Yaw
+plt.figure(2)
+x = Time
+y1 = Yaw_Sen1
+y2 = Yaw_SD
+plt.scatter(x, y1, s = 5)
+plt.scatter(x,y2, s = 3)
+plt.rcParams.update({'figure.figsize':(15,12), 'figure.dpi':100})
+plt.title(SDvTime_scattertitle)
+plt.xlabel('Time')
+plt.ylabel('Degrees')
+plt.legend(["Yaw angle", "Yaw SD between sensors"])
+# plt.show()
+plt.savefig(SDvTime_figname_Yaw)
+plt.clf()
+
 
 
 
