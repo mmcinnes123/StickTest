@@ -2,11 +2,18 @@
 # Tidy up input .csv file so there's only one heading row and any rows on bottom are deleted
 # Change settings:
 
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import logging
+import seaborn as sns
+
 # Settings:
 input_file = "MagTest9.csv"
 # Type of data (slow, fast, DZ, mov, stat)
 ty_data = "slow_mov"
 
+# Set names based on settings
 boxplot_title = "Standard deviation - " + str(ty_data)
 boxplot_figname = "SD_BoxPlot_" + str(ty_data) + ".png"
 SDvTime_scattertitle = "Pitch SD - " + str(ty_data)
@@ -14,13 +21,10 @@ SDvTime_figname_Pitch = "SDvTime(Pitch)_" + str(ty_data) + ".png"
 SDvTime_figname_Roll = "SDvTime(Roll)_" + str(ty_data) + ".png"
 SDvTime_figname_Yaw = "SDvTime(Yaw)_" + str(ty_data) + ".png"
 
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import logging
-import seaborn as sns
 
-logging.basicConfig(filename='std.log')
+logging.basicConfig(filename='std.log', level=logging.INFO)
+logging.info("Input file: " + input_file)
+logging.info("Test type: " + ty_data)
 
 def Average(lst):
     return sum(lst)/len(lst)
@@ -51,7 +55,7 @@ with open(input_file, 'r') as file:
     # Run through each row of the data frame to find the average and SD of all values
     Pitch_mean_values = []
     Pitch_SD = []
-    counter = 0
+    counter_Pitch = 0
     for i in range(len(df)):
         # Make a list of the four values at each time sample
         lst = list(df.loc[i,:])
@@ -63,13 +67,13 @@ with open(input_file, 'r') as file:
         are_pos = all(val > 0 for val in lst)
         # Check if we want to exclude them or not
         if (are_near_180 == True) and (are_neg == False) and (are_pos == False):
-            counter += 1
+            counter_Pitch += 1
             Pitch_mean_values.append(np.nan)
             Pitch_SD.append(np.std(np.nan))
         else:
             Pitch_mean_values.append(Average(lst))
             Pitch_SD.append(np.std(lst))
-    print("The number of samples excluded from the Pitch values was: " + str(counter))
+    logging.info("The number of samples excluded from the Pitch values was: " + str(counter_Pitch))
 
 ### Roll
 with open(input_file, 'r') as file:
@@ -81,7 +85,7 @@ with open(input_file, 'r') as file:
     # Run through each row of the data frame to find the average and SD of all values
     Roll_mean_values = []
     Roll_SD = []
-    counter = 0
+    counter_Roll = 0
     for i in range(len(df)):
         # Make a list of the four values at each time sample
         lst = list(df.loc[i,:])
@@ -93,13 +97,13 @@ with open(input_file, 'r') as file:
         are_pos = all(val > 0 for val in lst)
         # Check if we want to exclude them or not
         if (are_near_180 == True) and (are_neg == False) and (are_pos == False):
-            counter += 1
+            counter_Roll += 1
             Roll_mean_values.append(np.nan)
             Roll_SD.append(np.std(np.nan))
         else:
             Roll_mean_values.append(Average(lst))
             Roll_SD.append(np.std(lst))
-    print("The number of samples excluded from the Roll values was: " + str(counter))
+    logging.info("The number of samples excluded from the Roll values was: " + str(counter_Roll))
 
 ### Yaw
 with open(input_file, 'r') as file:
@@ -111,7 +115,7 @@ with open(input_file, 'r') as file:
     # Run through each row of the data frame to find the average and SD of all values
     Yaw_mean_values = []
     Yaw_SD = []
-    counter = 0
+    counter_Yaw = 0
     for i in range(len(df)):
         # Make a list of the four values at each time sample
         lst = list(df.loc[i,:])
@@ -123,47 +127,36 @@ with open(input_file, 'r') as file:
         are_pos = all(val > 0 for val in lst)
         # Check if we want to exclude them or not
         if (are_near_180 == True) and (are_neg == False) and (are_pos == False):
-            counter += 1
+            counter_Yaw += 1
             Yaw_mean_values.append(np.nan)
             Yaw_SD.append(np.std(np.nan))
         else:
             Yaw_mean_values.append(Average(lst))
             Yaw_SD.append(np.std(lst))
-    print("The number of samples excluded from the Yaw values was: " + str(counter))
+    logging.info("The number of samples excluded from the Yaw values was: " + str(counter_Yaw))
 
-# # Calculate the average value for the SD in each plane
-# Pitch_average_SD = Average(Pitch_SD)
-# Roll_average_SD = Average(Roll_SD)
-# Yaw_average_SD = Average(Yaw_SD)
 
-# mask = ~np.isnan(Pitch_SD)
-# Pitch_SD = [d[m] for d, m in zip(Pitch_SD, mask)]
-# mask = ~np.isnan(Roll_SD)
-# Roll_SD = [d[m] for d, m in zip(Roll_SD, mask)]
-# mask = ~np.isnan(Yaw_SD)
-# Yaw_SD = [d[m] for d, m in zip(Yaw_SD, mask)]
+### Create a list and data frame of the SDs
 SD = [Pitch_SD, Roll_SD, Yaw_SD]
-
-# print("The mean value of the SD deviation between four sensors for Pitch is: ", str(Pitch_average_SD))
-# print("The mean value of the SD deviation between four sensors for Roll is: ", str(Roll_average_SD))
-# print("The mean value of the SD deviation between four sensors for Yaw is: ", str(Yaw_average_SD))
+SD = pd.DataFrame(list(zip(Pitch_SD, Roll_SD, Yaw_SD)), columns =['Pitch_SD', 'Roll_SD', 'Yaw_SD'])
 
 
 ### Create a boxplot of the SDs
 plt.figure(1)
-fig = plt.figure(figsize=(15, 12))
+fig = plt.figure(figsize=(10, 8))
 bp = sns.boxplot(SD, notch='True', showmeans='True')
-
-
+Pitch_median = round(SD['Pitch_SD'].median(),2)
+Roll_median = round(SD['Roll_SD'].median(),2)
+Yaw_median = round(SD['Yaw_SD'].median(),2)
+bp.set_xticklabels(["Pitch SD\nMedian = " + str(Pitch_median) + "\nNumber discounted = " + str(counter_Pitch),
+                    "Roll SD\nMedian = " + str(Roll_median) + "\nNumber discounted = " + str(counter_Roll),
+                    "Yaw SD\nMedian = " + str(Yaw_median) + "\nNumber discounted = " + str(counter_Yaw)])
 # Adding title
-plt.title(boxplot_title)
+plt.title(boxplot_title + "(" + input_file + ")")
 plt.ylabel('Degrees')
-# Show plot
-# plt.show()
 # Save plot
 plt.savefig(boxplot_figname)
 plt.clf()
-
 
 
 
@@ -176,7 +169,7 @@ y1 = Pitch_Sen1
 y2 = Pitch_SD
 plt.scatter(x, y1, s = 5)
 plt.scatter(x,y2, s = 3)
-plt.rcParams.update({'figure.figsize':(15,12), 'figure.dpi':100})
+plt.rcParams.update({'figure.figsize':(10,8), 'figure.dpi':100})
 plt.title(SDvTime_scattertitle)
 plt.xlabel('Time')
 plt.ylabel('Degrees')
@@ -192,7 +185,7 @@ y1 = Roll_Sen1
 y2 = Roll_SD
 plt.scatter(x, y1, s = 5)
 plt.scatter(x,y2, s = 3)
-plt.rcParams.update({'figure.figsize':(15,12), 'figure.dpi':100})
+plt.rcParams.update({'figure.figsize':(10,8), 'figure.dpi':100})
 plt.title(SDvTime_scattertitle)
 plt.xlabel('Time')
 plt.ylabel('Degrees')
@@ -208,7 +201,7 @@ y1 = Yaw_Sen1
 y2 = Yaw_SD
 plt.scatter(x, y1, s = 5)
 plt.scatter(x,y2, s = 3)
-plt.rcParams.update({'figure.figsize':(15,12), 'figure.dpi':100})
+plt.rcParams.update({'figure.figsize':(10,8), 'figure.dpi':100})
 plt.title(SDvTime_scattertitle)
 plt.xlabel('Time')
 plt.ylabel('Degrees')
